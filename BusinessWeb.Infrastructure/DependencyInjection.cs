@@ -5,7 +5,9 @@ using BusinessWeb.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using BusinessWeb.Application.Interfaces.Debts;
 using BusinessWeb.Application.Interfaces.Products;
+using BusinessWeb.Application.Interfaces.Reports;
 using BusinessWeb.Application.Interfaces.Sales;
 
 namespace BusinessWeb.Infrastructure;
@@ -25,6 +27,8 @@ public static class DependencyInjection
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<ISaleService, SaleService>();
+        services.AddScoped<IDebtService, DebtService>();
+        services.AddScoped<IReportService, ReportService>();
 
         return services;
     }

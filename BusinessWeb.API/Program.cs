@@ -1,10 +1,9 @@
 ﻿using System.Text;
 using BusinessWeb.API.Middleware;
-using BusinessWeb.Application.Validators;
+using BusinessWeb.Application.Validators.Sales;
 using BusinessWeb.Infrastructure;
 using BusinessWeb.Infrastructure.Data;
 using BusinessWeb.Infrastructure.Seed;
-using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -13,9 +12,9 @@ using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 // ✅ Controllers
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddApplicationPart(typeof(BusinessWeb.API.Controllers.SalesController).Assembly);
 builder.Services.AddAutoMapper(typeof(BusinessWeb.Application.Mapping.ProductProfile).Assembly);
-builder.Services.AddValidatorsFromAssembly(typeof(BusinessWeb.Application.Mapping.ProductProfile).Assembly);
 
 // ✅ Swagger + JWT support
 builder.Services.AddEndpointsApiExplorer();
@@ -74,10 +73,15 @@ builder.Services.AddTransient<ExceptionMiddleware>();
 var app = builder.Build();
 
 // ✅ Auto migrate + seed admin
-using (var scope = app.Services.CreateScope())
+try
 {
+    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await DatabaseSeeder.SeedAsync(db);
+}
+catch (Exception ex)
+{
+    app.Logger.LogError(ex, "Database migration/seed failed. App will continue without crashing.");
 }
 
 // ✅ Swagger
