@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using BusinessWeb.Application.DTOs.Sales;
 using BusinessWeb.Application.Exceptions;
 using BusinessWeb.Application.Interfaces;
@@ -8,6 +8,7 @@ using BusinessWeb.Domain.Enums;
 using BusinessWeb.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper.QueryableExtensions;
+ codex/finalize-production-ready-backend-for-businessweb-3s06y9
 
 namespace BusinessWeb.Infrastructure.Services;
 
@@ -225,3 +226,6 @@ public class SaleService : ISaleService
         };
     }
 }
+
+using Microsoft.Extensions.Logging;
+ main
