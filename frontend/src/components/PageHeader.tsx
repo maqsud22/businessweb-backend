@@ -10,7 +10,7 @@ export default function PageHeader({ title, actions, subtitle }: Props) {
   return (
     <div className="mb-4 flex items-center justify-between">
       <div>
-        <h1 className="text-xl font-semibold">{title}</h1>
+        <h1 className="text-xl font-semibold text-slate-900">{title}</h1>
         {subtitle ? <p className="text-sm text-slate-500">{subtitle}</p> : null}
       </div>
       {actions}

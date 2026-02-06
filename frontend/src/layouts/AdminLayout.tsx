@@ -15,7 +15,7 @@ export default function AdminLayout() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="flex">
-        <aside className="min-h-screen w-64 border-r border-slate-200 bg-white p-4">
+        <aside className="min-h-screen w-64 border-r border-slate-200 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 p-4 text-white">
           <div className="mb-6 text-lg font-semibold">BusinessWeb Admin</div>
           <nav className="space-y-2">
             {navItems.map((item) => (
@@ -23,8 +23,8 @@ export default function AdminLayout() {
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) =>
-                  `block rounded-md px-3 py-2 text-sm ${
-                    isActive ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-100'
+                  `block rounded-md px-3 py-2 text-sm transition ${
+                    isActive ? 'bg-white/15 text-white' : 'text-slate-200 hover:bg-white/10'
                   }`
                 }
               >
@@ -35,7 +35,13 @@ export default function AdminLayout() {
         </aside>
         <main className="flex-1">
           <header className="border-b border-slate-200 bg-white p-4">
-            <div className="text-sm text-slate-500">Admin Panel</div>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm text-slate-500">Admin Panel</div>
+                <div className="text-xs text-slate-400">BusinessWeb Management</div>
+              </div>
+              <div className="badge">v1</div>
+            </div>
           </header>
           <div className="p-6">
             <Outlet />
