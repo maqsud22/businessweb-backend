@@ -6,13 +6,17 @@ obj/
 *.cache
 *.log
 
+# Node
+node_modules/
+frontend/node_modules/
+frontend/dist/
+
 # Rider / VS
 .vs/
 .idea/
 
 # Secrets
 appsettings.Development.json
-appsettings.Production.json
 
 # OS
 .DS_Store

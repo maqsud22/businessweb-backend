@@ -17,5 +17,9 @@ public class SaleProfile : Profile
             .ForMember(d => d.LineTotal, o => o.Ignore())
             .ForMember(d => d.Product, o => o.Ignore())
             .ForMember(d => d.ProductPackage, o => o.Ignore());
+
+        CreateMap<Sale, SaleListItemDto>();
+        CreateMap<SaleLine, SaleLineDetailDto>();
+        CreateMap<Sale, SaleDetailDto>();
     }
 }

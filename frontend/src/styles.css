@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.table th,
+.table td {
+  @apply px-3 py-2 text-sm;
+}
+
+.input {
+  @apply w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-slate-500 focus:outline-none;
+}
+
+.button {
+  @apply inline-flex items-center justify-center rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50;
+}
+
+.button-outline {
+  @apply inline-flex items-center justify-center rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100;
+}
+
+.card {
+  @apply rounded-lg border border-slate-200 bg-white p-4 shadow-sm;
+}
+
+/* ===== LOGIN THEME ===== */
+:root {
+  --bg: linear-gradient(135deg, #0f2027, #1a5893, #6dd5fa);
+  --card: rgba(255, 255, 255, 0.15);
+  --text: #fff;
+  --border: rgba(255, 255, 255, 0.3);
+  --btn: linear-gradient(135deg, #1a5893, #6dd5fa);
+}
+
+body.login-theme {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  animation: pulseBackground 6s ease infinite;
+  transition: 0.4s;
+}
+
+.login-page {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+@keyframes pulseBackground {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.wrapper {
+  background: var(--card);
+  backdrop-filter: blur(15px);
+  border-radius: 20px;
+  padding: 40px;
+  animation: wrapperGlow 4s ease-in-out infinite;
+}
+
+@keyframes wrapperGlow {
+  0% {
+    box-shadow: 0 0 20px rgba(0, 150, 255, 0.3), 0 0 40px rgba(0, 150, 255, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(0, 150, 255, 0.5), 0 0 60px rgba(0, 150, 255, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 20px rgba(0, 150, 255, 0.3), 0 0 40px rgba(0, 150, 255, 0.2);
+  }
+}
+
+.input-box {
+  position: relative;
+  height: 50px;
+  margin: 25px 0;
+}
+
+.input-box input {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: 2px solid var(--border);
+  border-radius: 40px;
+  padding: 0 20px;
+  font-size: 16px;
+  color: var(--text);
+  outline: none;
+}
+
+.input-box input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.btn {
+  width: 100%;
+  height: 45px;
+  border: none;
+  border-radius: 40px;
+  background: var(--btn);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn:hover {
+  box-shadow: 0 0 30px rgba(0, 150, 255, 0.9);
+}

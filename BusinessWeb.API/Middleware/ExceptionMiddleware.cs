@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using BusinessWeb.Application.Exceptions;
 using FluentValidation;
 
 namespace BusinessWeb.API.Middleware;
@@ -31,6 +32,18 @@ public class ExceptionMiddleware : IMiddleware
                 title = "Validation failed",
                 status = 422,
                 errors
+            });
+        }
+        catch (AppException aex)
+        {
+            context.Response.StatusCode = aex.StatusCode;
+            context.Response.ContentType = "application/json";
+
+            await context.Response.WriteAsJsonAsync(new
+            {
+                type = aex.Type,
+                title = aex.Message,
+                status = aex.StatusCode
             });
         }
         catch (Exception ex)
