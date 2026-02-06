@@ -1,19 +1,39 @@
-﻿using System.Text;
+using System.Text;
 using BusinessWeb.API.Middleware;
 using BusinessWeb.Application.Validators.Sales;
 using BusinessWeb.Infrastructure;
 using BusinessWeb.Infrastructure.Data;
 using BusinessWeb.Infrastructure.Seed;
+using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ✅ Controllers
-builder.Services.AddControllers()
-    .AddApplicationPart(typeof(BusinessWeb.API.Controllers.SalesController).Assembly);
+// ✅ Controllers + JSON default (Swagger'da text/plain emas, application/json chiqishi uchun)
+builder.Services.AddControllers(options =>
+{
+    // Agar client Accept: text/plain yuborsa 406 qaytaradi (professional behavior)
+    options.ReturnHttpNotAcceptable = true;
+})
+.AddApplicationPart(typeof(BusinessWeb.API.Controllers.SalesController).Assembly)
+.ConfigureApiBehaviorOptions(options =>
+{
+    // Validation errors JSON bo‘lsin (422)
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var problem = new ValidationProblemDetails(context.ModelState)
+        {
+            Status = StatusCodes.Status422UnprocessableEntity,
+            Title = "Validation failed"
+        };
+        return new UnprocessableEntityObjectResult(problem);
+    };
+});
+
 builder.Services.AddAutoMapper(typeof(BusinessWeb.Application.Mapping.ProductProfile).Assembly);
 
 // ✅ Swagger + JWT support
@@ -36,7 +56,7 @@ builder.Services.AddSwaggerGen(c =>
     c.AddSecurityDefinition("Bearer", securityScheme);
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
-        { securityScheme, new string[] { } }
+        { securityScheme, Array.Empty<string>() }
     });
 });
 
@@ -44,7 +64,7 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateSaleValidator>();
 
-// ✅ Infrastructure DI (DbContext, UoW, BCrypt, JwtTokenService)
+// ✅ Infrastructure DI
 builder.Services.AddInfrastructure(builder.Configuration);
 
 // ✅ JWT Auth
