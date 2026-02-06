@@ -1,10 +1,9 @@
-﻿using System.Text;
+using System.Text;
 using BusinessWeb.API.Middleware;
 using BusinessWeb.Application.Validators.Sales;
 using BusinessWeb.Infrastructure;
 using BusinessWeb.Infrastructure.Data;
 using BusinessWeb.Infrastructure.Seed;
-using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
@@ -87,6 +86,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
+// ✅ CORS (Development only)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("DevCors", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 // ✅ Global Exception Middleware
 builder.Services.AddTransient<ExceptionMiddleware>();
 
@@ -116,6 +126,11 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 // ✅ Pipeline
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors("DevCors");
+}
+
 app.UseAuthentication();
 app.UseAuthorization();
 
