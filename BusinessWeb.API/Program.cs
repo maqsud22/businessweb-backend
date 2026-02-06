@@ -12,6 +12,11 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+ codex/finalize-production-ready-backend-for-businessweb-3s06y9
+// ✅ Controllers
+builder.Services.AddControllers()
+    .AddApplicationPart(typeof(BusinessWeb.API.Controllers.SalesController).Assembly);
+
 // ✅ Controllers + JSON default (Swagger'da text/plain emas, application/json chiqishi uchun)
 builder.Services.AddControllers(options =>
 {
@@ -33,6 +38,7 @@ builder.Services.AddControllers(options =>
     };
 });
 
+ main
 builder.Services.AddAutoMapper(typeof(BusinessWeb.Application.Mapping.ProductProfile).Assembly);
 
 // ✅ Swagger + JWT support
@@ -102,7 +108,11 @@ builder.Services.AddTransient<ExceptionMiddleware>();
 
 var app = builder.Build();
 
+ codex/finalize-production-ready-backend-for-businessweb-3s06y9
+// ✅ Auto migrate + seed admin (Development only)
+
 // ✅ Auto migrate + seed (Development only)
+ main
 if (app.Environment.IsDevelopment())
 {
     try
