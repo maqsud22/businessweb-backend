@@ -1,4 +1,5 @@
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using BusinessWeb.Application.DTOs.Sales;
 using BusinessWeb.Application.Exceptions;
 using BusinessWeb.Application.Interfaces;
@@ -7,8 +8,7 @@ using BusinessWeb.Domain.Entities;
 using BusinessWeb.Domain.Enums;
 using BusinessWeb.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using AutoMapper.QueryableExtensions;
- codex/finalize-production-ready-backend-for-businessweb-3s06y9
+using Microsoft.Extensions.Logging;
 
 namespace BusinessWeb.Infrastructure.Services;
 
@@ -46,7 +46,6 @@ public class SaleService : ISaleService
 
     public async Task<SaleResultDto> CreateAsync(CreateSaleDto dto, CancellationToken ct = default)
     {
-        // 1) Store mavjudmi?
         var storeExists = await _uow.Repo<Store>().Query()
             .AsNoTracking()
             .AnyAsync(s => s.Id == dto.StoreId, ct);
@@ -54,7 +53,6 @@ public class SaleService : ISaleService
         if (!storeExists)
             throw new AppException("Store topilmadi.", 404, "not_found");
 
-        // 2) Packages tekshiruv
         var packageIds = dto.Lines.Select(x => x.ProductPackageId).Distinct().ToList();
         var packages = await _uow.Repo<ProductPackage>().Query()
             .AsNoTracking()
@@ -64,7 +62,6 @@ public class SaleService : ISaleService
         if (packages.Count != packageIds.Count)
             throw new AppException("Ba'zi ProductPackage topilmadi.", 404, "not_found");
 
-        // Product <-> Package mosligini tekshirish
         foreach (var line in dto.Lines)
         {
             var pkg = packages.First(p => p.Id == line.ProductPackageId);
@@ -72,7 +69,6 @@ public class SaleService : ISaleService
                 throw new AppException("ProductPackage tanlangan Product ga tegishli emas.", 400, "validation_error");
         }
 
-        // 3) Stock check (base birlik)
         var requiredBaseByProduct = dto.Lines
             .GroupBy(l => l.ProductId)
             .ToDictionary(
@@ -86,7 +82,6 @@ public class SaleService : ISaleService
 
         var productIds = requiredBaseByProduct.Keys.ToList();
 
-        // Incoming base qty
         var incoming = await _uow.Repo<StockIn>().Query()
             .AsNoTracking()
             .Where(x => productIds.Contains(x.ProductId))
@@ -98,7 +93,6 @@ public class SaleService : ISaleService
             })
             .ToListAsync(ct);
 
-        // Sold base qty
         var sold = await _uow.Repo<SaleLine>().Query()
             .AsNoTracking()
             .Where(x => productIds.Contains(x.ProductId))
@@ -127,7 +121,6 @@ public class SaleService : ISaleService
                 throw new AppException($"Stock yetarli emas. ProductId={pid}. Available={available}, Required={required}", 409, "conflict");
         }
 
-        // 4) Transaction
         await using var tx = await _db.Database.BeginTransactionAsync(ct);
 
         var sale = new Sale
@@ -144,13 +137,12 @@ public class SaleService : ISaleService
             entity.Id = Guid.NewGuid();
             entity.SaleId = sale.Id;
             entity.CreatedAt = DateTime.UtcNow;
-            entity.LineTotal = l.Quantity * l.UnitPrice; // 1 package narxiga ko'ra
+            entity.LineTotal = l.Quantity * l.UnitPrice;
             return entity;
         }).ToList();
 
         var total = lines.Sum(x => x.LineTotal);
 
-        // Payment rules
         if (dto.PaymentType == PaymentType.Cash)
         {
             if (dto.PaidAmount != total)
@@ -167,7 +159,6 @@ public class SaleService : ISaleService
                 throw new AppException("Partial bo'lsa 0 < PaidAmount < Total bo'lishi shart.", 400, "validation_error");
         }
 
-        // Sale’da faqat total saqlanadi (sizning modelingiz shunaqa)
         sale.TotalAmount = total;
 
         await _uow.Repo<Sale>().AddAsync(sale, ct);
@@ -192,7 +183,6 @@ public class SaleService : ISaleService
 
             await _uow.Repo<Debt>().AddAsync(debt, ct);
 
-            // Partial bo'lsa birinchi payment record (audit)
             if (dto.PaymentType == PaymentType.Partial && dto.PaidAmount > 0)
             {
                 var payment = new DebtPayment
@@ -226,6 +216,3 @@ public class SaleService : ISaleService
         };
     }
 }
-
-using Microsoft.Extensions.Logging;
- main

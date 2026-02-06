@@ -24,15 +24,15 @@ export default function DashboardPage() {
       <Status loading={dailyQuery.isLoading} error={dailyQuery.error?.message} />
       {dailyQuery.data ? (
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="card">
+          <div className="stat-card">
             <div className="text-sm text-slate-500">Total Sales</div>
             <div className="text-2xl font-semibold">{dailyQuery.data.totalSales}</div>
           </div>
-          <div className="card">
+          <div className="stat-card">
             <div className="text-sm text-slate-500">Cash Sales</div>
             <div className="text-2xl font-semibold">{dailyQuery.data.cashSales}</div>
           </div>
-          <div className="card">
+          <div className="stat-card">
             <div className="text-sm text-slate-500">Debt Payments</div>
             <div className="text-2xl font-semibold">{dailyQuery.data.debtPayments}</div>
           </div>

@@ -1,17 +1,13 @@
- codex/finalize-production-ready-backend-for-businessweb-3s06y9
-﻿using BusinessWeb.Application.DTOs.Debts;
-
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using BusinessWeb.Application.DTOs.Debts;
- main
 using BusinessWeb.Application.Exceptions;
 using BusinessWeb.Application.Interfaces;
 using BusinessWeb.Application.Interfaces.Debts;
 using BusinessWeb.Domain.Entities;
 using BusinessWeb.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using AutoMapper;
-using AutoMapper.QueryableExtensions;
- codex/finalize-production-ready-backend-for-businessweb-3s06y9
+using Microsoft.Extensions.Logging;
 
 namespace BusinessWeb.Infrastructure.Services;
 
@@ -87,6 +83,3 @@ public class DebtService : IDebtService
         };
     }
 }
-
-using Microsoft.Extensions.Logging;
- main
