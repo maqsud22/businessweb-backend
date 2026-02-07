@@ -89,14 +89,14 @@ export default function ReportsPage() {
             onChange={(e) => setDailyDate(e.target.value)}
           />
           <Status loading={dailyQuery.isLoading} error={dailyQuery.error?.message} />
-        {dailyQuery.data ? (
-          <div className="text-sm text-slate-700">
-            Total: <span className="number-strong">{formatNumber(dailyQuery.data.totalSales)}</span> | Cash:{' '}
-            <span className="number-strong">{formatNumber(dailyQuery.data.cashSales)}</span> | Debt:{' '}
-            <span className="number-strong">{formatNumber(dailyQuery.data.debtSales)}</span>
-          </div>
-        ) : null}
-      </div>
+          {dailyQuery.data ? (
+            <div className="text-sm text-slate-700">
+              Total: <span className="number-strong">{formatNumber(dailyQuery.data.totalSales)}</span> | Cash:{' '}
+              <span className="number-strong">{formatNumber(dailyQuery.data.cashSales)}</span> | Debt:{' '}
+              <span className="number-strong">{formatNumber(dailyQuery.data.debtSales)}</span>
+            </div>
+          ) : null}
+        </div>
         <div className="card space-y-3">
           <div className="text-sm font-medium">Monthly Report</div>
           <input
@@ -106,14 +106,14 @@ export default function ReportsPage() {
             onChange={(e) => setMonthlyDate(e.target.value)}
           />
           <Status loading={monthlyQuery.isLoading} error={monthlyQuery.error?.message} />
-        {monthlyQuery.data ? (
-          <div className="text-sm text-slate-700">
-            Total: <span className="number-strong">{formatNumber(monthlyQuery.data.totalSales)}</span> | Cash:{' '}
-            <span className="number-strong">{formatNumber(monthlyQuery.data.cashSales)}</span> | Debt:{' '}
-            <span className="number-strong">{formatNumber(monthlyQuery.data.debtSales)}</span>
-          </div>
-        ) : null}
-      </div>
+          {monthlyQuery.data ? (
+            <div className="text-sm text-slate-700">
+              Total: <span className="number-strong">{formatNumber(monthlyQuery.data.totalSales)}</span> | Cash:{' '}
+              <span className="number-strong">{formatNumber(monthlyQuery.data.cashSales)}</span> | Debt:{' '}
+              <span className="number-strong">{formatNumber(monthlyQuery.data.debtSales)}</span>
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <div className="card space-y-3">

@@ -1,4 +1,4 @@
-﻿using BusinessWeb.Application.DTOs.Debts;
+using BusinessWeb.Application.DTOs.Debts;
 using BusinessWeb.Application.Exceptions;
 using BusinessWeb.Application.Interfaces;
 using BusinessWeb.Application.Interfaces.Debts;

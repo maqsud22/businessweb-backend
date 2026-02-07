@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using BusinessWeb.Application.DTOs.StockIns;
 using BusinessWeb.Application.Exceptions;

@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using BusinessWeb.API.Middleware;
 using BusinessWeb.Application.Validators.Sales;
 using BusinessWeb.Infrastructure;
@@ -36,7 +36,7 @@ builder.Services.AddSwaggerGen(c =>
     c.AddSecurityDefinition("Bearer", securityScheme);
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
-        { securityScheme, new string[] { } }
+        { securityScheme, Array.Empty<string>() }
     });
 });
 
@@ -44,7 +44,7 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateSaleValidator>();
 
-// ✅ Infrastructure DI (DbContext, UoW, BCrypt, JwtTokenService)
+// ✅ Infrastructure DI
 builder.Services.AddInfrastructure(builder.Configuration);
 
 // ✅ JWT Auth
