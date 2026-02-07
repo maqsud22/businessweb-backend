@@ -5,8 +5,13 @@ using BusinessWeb.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using BusinessWeb.Application.Interfaces.Debts;
+using BusinessWeb.Application.Interfaces.ProductPackages;
 using BusinessWeb.Application.Interfaces.Products;
+using BusinessWeb.Application.Interfaces.Reports;
 using BusinessWeb.Application.Interfaces.Sales;
+using BusinessWeb.Application.Interfaces.StockIns;
+using BusinessWeb.Application.Interfaces.Stores;
 
 namespace BusinessWeb.Infrastructure;
 
@@ -25,6 +30,11 @@ public static class DependencyInjection
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<ISaleService, SaleService>();
+        services.AddScoped<IDebtService, DebtService>();
+        services.AddScoped<IReportService, ReportService>();
+        services.AddScoped<IStoreService, StoreService>();
+        services.AddScoped<IProductPackageService, ProductPackageService>();
+        services.AddScoped<IStockInService, StockInService>();
 
         return services;
     }

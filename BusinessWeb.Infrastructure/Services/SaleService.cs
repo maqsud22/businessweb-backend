@@ -1,11 +1,13 @@
 ﻿using AutoMapper;
 using BusinessWeb.Application.DTOs.Sales;
+using BusinessWeb.Application.Exceptions;
 using BusinessWeb.Application.Interfaces;
 using BusinessWeb.Application.Interfaces.Sales;
 using BusinessWeb.Domain.Entities;
 using BusinessWeb.Domain.Enums;
 using BusinessWeb.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper.QueryableExtensions;
 
 namespace BusinessWeb.Infrastructure.Services;
 
@@ -14,12 +16,31 @@ public class SaleService : ISaleService
     private readonly AppDbContext _db;
     private readonly IUnitOfWork _uow;
     private readonly IMapper _mapper;
+    private readonly ILogger<SaleService> _logger;
 
-    public SaleService(AppDbContext db, IUnitOfWork uow, IMapper mapper)
+    public SaleService(AppDbContext db, IUnitOfWork uow, IMapper mapper, ILogger<SaleService> logger)
     {
         _db = db;
         _uow = uow;
         _mapper = mapper;
+        _logger = logger;
+    }
+
+    public async Task<List<SaleListItemDto>> GetAllAsync(CancellationToken ct = default)
+    {
+        return await _db.Sales.AsNoTracking()
+            .OrderByDescending(x => x.CreatedAt)
+            .ProjectTo<SaleListItemDto>(_mapper.ConfigurationProvider)
+            .ToListAsync(ct);
+    }
+
+    public async Task<SaleDetailDto?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    {
+        var sale = await _db.Sales.AsNoTracking()
+            .Include(x => x.Lines)
+            .FirstOrDefaultAsync(x => x.Id == id, ct);
+
+        return sale is null ? null : _mapper.Map<SaleDetailDto>(sale);
     }
 
     public async Task<SaleResultDto> CreateAsync(CreateSaleDto dto, CancellationToken ct = default)
@@ -30,7 +51,7 @@ public class SaleService : ISaleService
             .AnyAsync(s => s.Id == dto.StoreId, ct);
 
         if (!storeExists)
-            throw new InvalidOperationException("Store topilmadi.");
+            throw new AppException("Store topilmadi.", 404, "not_found");
 
         // 2) Packages tekshiruv
         var packageIds = dto.Lines.Select(x => x.ProductPackageId).Distinct().ToList();
@@ -40,14 +61,14 @@ public class SaleService : ISaleService
             .ToListAsync(ct);
 
         if (packages.Count != packageIds.Count)
-            throw new InvalidOperationException("Ba'zi ProductPackage topilmadi.");
+            throw new AppException("Ba'zi ProductPackage topilmadi.", 404, "not_found");
 
         // Product <-> Package mosligini tekshirish
         foreach (var line in dto.Lines)
         {
             var pkg = packages.First(p => p.Id == line.ProductPackageId);
             if (pkg.ProductId != line.ProductId)
-                throw new InvalidOperationException("ProductPackage tanlangan Product ga tegishli emas.");
+                throw new AppException("ProductPackage tanlangan Product ga tegishli emas.", 400, "validation_error");
         }
 
         // 3) Stock check (base birlik)
@@ -102,7 +123,7 @@ public class SaleService : ISaleService
             var available = inBase - soldBase;
 
             if (available < required)
-                throw new InvalidOperationException($"Stock yetarli emas. ProductId={pid}. Available={available}, Required={required}");
+                throw new AppException($"Stock yetarli emas. ProductId={pid}. Available={available}, Required={required}", 409, "conflict");
         }
 
         // 4) Transaction
@@ -132,17 +153,17 @@ public class SaleService : ISaleService
         if (dto.PaymentType == PaymentType.Cash)
         {
             if (dto.PaidAmount != total)
-                throw new InvalidOperationException("Cash bo'lsa PaidAmount totalga teng bo'lishi kerak.");
+                throw new AppException("Cash bo'lsa PaidAmount totalga teng bo'lishi kerak.", 400, "validation_error");
         }
         else if (dto.PaymentType == PaymentType.Debt)
         {
             if (dto.PaidAmount != 0)
-                throw new InvalidOperationException("Debt bo'lsa PaidAmount 0 bo'lishi kerak.");
+                throw new AppException("Debt bo'lsa PaidAmount 0 bo'lishi kerak.", 400, "validation_error");
         }
         else if (dto.PaymentType == PaymentType.Partial)
         {
             if (dto.PaidAmount <= 0 || dto.PaidAmount >= total)
-                throw new InvalidOperationException("Partial bo'lsa 0 < PaidAmount < Total bo'lishi shart.");
+                throw new AppException("Partial bo'lsa 0 < PaidAmount < Total bo'lishi shart.", 400, "validation_error");
         }
 
         // Sale’da faqat total saqlanadi (sizning modelingiz shunaqa)
@@ -188,6 +209,8 @@ public class SaleService : ISaleService
 
         await _uow.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
+
+        _logger.LogInformation("Sale created. SaleId={SaleId}, StoreId={StoreId}, Total={Total}", sale.Id, sale.StoreId, sale.TotalAmount);
 
         return new SaleResultDto
         {
