@@ -13,6 +13,8 @@ const lineSchema = z.object({
   productId: z.string().uuid(),
   productPackageId: z.string().uuid(),
   quantity: z.number().min(1),
+
+  quantity: z.number().min(0.0001),
   unitPrice: z.number().min(0.01)
 });
 
@@ -150,6 +152,8 @@ export default function SalesCreatePage() {
                     <input
                       type="number"
                       step="1"
+
+                      step="0.0001"
                       className="input"
                       {...form.register(`lines.${index}.quantity`, { valueAsNumber: true })}
                     />

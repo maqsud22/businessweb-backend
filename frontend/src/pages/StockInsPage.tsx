@@ -12,6 +12,7 @@ const schema = z.object({
   productId: z.string().uuid(),
   productPackageId: z.string().uuid(),
   quantity: z.number().min(1),
+  quantity: z.number().min(0.0001),
   costPrice: z.number().min(0),
   date: z.string().min(1)
 });
@@ -158,6 +159,8 @@ export default function StockInsPage() {
               <input
                 type="number"
                 step="1"
+
+                step="0.0001"
                 className="input"
                 {...form.register('quantity', { valueAsNumber: true })}
               />
