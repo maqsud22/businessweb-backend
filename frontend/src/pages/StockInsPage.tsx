@@ -1,26 +1,33 @@
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useMemo } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
-import { Product, ProductPackage, StockIn } from '../api/types';
+import { Product, ProductPackage, Store } from '../api/types';
 import PageHeader from '../components/PageHeader';
 import Status from '../components/Status';
+import { useNavigate } from 'react-router-dom';
+import { formatNumber } from '../lib/format';
 
-const schema = z.object({
+const lineSchema = z.object({
   productId: z.string().uuid(),
   productPackageId: z.string().uuid(),
   quantity: z.number().min(1),
-  quantity: z.number().min(0.0001),
-  costPrice: z.number().min(0),
-  date: z.string().min(1)
+  unitPrice: z.number().min(0.01)
+});
+
+const schema = z.object({
+  storeId: z.string().uuid(),
+  paymentType: z.enum(['Cash', 'Debt', 'Partial']),
+  paidAmount: z.number().min(0),
+  lines: z.array(lineSchema).min(1)
 });
 
 type FormValues = z.infer<typeof schema>;
 
-async function fetchStockIns(): Promise<StockIn[]> {
-  const { data } = await apiClient.get('/api/StockIns');
+async function fetchStores(): Promise<Store[]> {
+  const { data } = await apiClient.get('/api/Stores');
   return data;
 }
 
@@ -34,167 +41,159 @@ async function fetchPackages(): Promise<ProductPackage[]> {
   return data;
 }
 
-export default function StockInsPage() {
-  const [editing, setEditing] = useState<StockIn | null>(null);
+export default function SalesCreatePage() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const stockQuery = useQuery({ queryKey: ['stockIns'], queryFn: fetchStockIns });
+  const storesQuery = useQuery({ queryKey: ['stores'], queryFn: fetchStores });
   const productsQuery = useQuery({ queryKey: ['products'], queryFn: fetchProducts });
   const packagesQuery = useQuery({ queryKey: ['productPackages'], queryFn: fetchPackages });
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { productId: '', productPackageId: '', quantity: 1, costPrice: 0, date: '' }
+    defaultValues: {
+      storeId: '',
+      paymentType: 'Cash',
+      paidAmount: 0,
+      lines: [{ productId: '', productPackageId: '', quantity: 1, unitPrice: 0 }]
+    }
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: 'lines'
   });
 
   const createMutation = useMutation({
-    mutationFn: (values: FormValues) => apiClient.post('/api/StockIns', values),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['stockIns'] })
+    mutationFn: (values: FormValues) => apiClient.post('/api/Sales', values),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sales'] });
+    }
   });
 
-  const updateMutation = useMutation({
-    mutationFn: (values: FormValues & { id: string }) =>
-      apiClient.put(`/api/StockIns/${values.id}`, values),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['stockIns'] })
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => apiClient.delete(`/api/StockIns/${id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['stockIns'] })
-  });
+  const totals = useMemo(() => {
+    return form.watch('lines').reduce((sum, line) => sum + line.quantity * line.unitPrice, 0);
+  }, [form.watch('lines')]);
 
   const onSubmit = async (values: FormValues) => {
-    if (editing) {
-      await updateMutation.mutateAsync({ ...values, id: editing.id });
-      setEditing(null);
-    } else {
-      await createMutation.mutateAsync(values);
-    }
-    form.reset({ productId: '', productPackageId: '', quantity: 1, costPrice: 0, date: '' });
-  };
-
-  const startEdit = (item: StockIn) => {
-    setEditing(item);
-    form.reset({
-      productId: item.productId,
-      productPackageId: item.productPackageId,
-      quantity: item.quantity,
-      costPrice: item.costPrice,
-      date: item.date
-    });
-  };
-
-  const handleDelete = (id: string) => {
-    if (window.confirm('Delete stock-in record?')) {
-      deleteMutation.mutate(id);
+    const response = await createMutation.mutateAsync(values);
+    const saleId = response.data?.saleId;
+    if (saleId) {
+      navigate(`/sales/${saleId}`);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Stock In" />
-      <div className="grid gap-6 md:grid-cols-[2fr,1fr]">
-        <div className="card">
-          <Status loading={stockQuery.isLoading} error={stockQuery.error?.message} />
-          {stockQuery.data ? (
-            <table className="table w-full">
-              <thead className="border-b">
-                <tr>
-                  <th>Product</th>
-                  <th>Package</th>
-                  <th>Qty</th>
-                  <th>Cost</th>
-                  <th>Date</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {stockQuery.data.map((item) => (
-                  <tr key={item.id} className="border-b last:border-0">
-                    <td>{item.productName ?? item.productId}</td>
-                    <td>{item.productPackageName ?? item.productPackageId}</td>
-                    <td>{item.quantity}</td>
-                    <td>{item.costPrice}</td>
-                    <td>{item.date?.slice(0, 10)}</td>
-                    <td className="text-right">
-                      <button className="button-outline mr-2" onClick={() => startEdit(item)}>
-                        Edit
-                      </button>
-                      <button className="button-outline" onClick={() => handleDelete(item.id)}>
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : null}
-        </div>
-        <div className="card">
-          <div className="mb-2 text-sm font-medium">{editing ? 'Edit Stock In' : 'New Stock In'}</div>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+    <div className="space-y-4">
+      <PageHeader title="Create Sale" />
+      <div className="card">
+        <Status loading={createMutation.isPending} error={createMutation.error?.message} />
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-3">
             <div>
-              <label className="text-sm">Product</label>
-              <select className="input" {...form.register('productId')}>
-                <option value="">Select product</option>
-                {productsQuery.data?.map((product) => (
-                  <option key={product.id} value={product.id}>
-                    {product.name}
+              <label className="text-sm">Store</label>
+              <select className="input" {...form.register('storeId')}>
+                <option value="">Select store</option>
+                {storesQuery.data?.map((store) => (
+                  <option key={store.id} value={store.id}>
+                    {store.name}
                   </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="text-sm">Package</label>
-              <select className="input" {...form.register('productPackageId')}>
-                <option value="">Select package</option>
-                {packagesQuery.data?.map((pkg) => (
-                  <option key={pkg.id} value={pkg.id}>
-                    {pkg.name}
-                  </option>
-                ))}
+              <label className="text-sm">Payment Type</label>
+              <select className="input" {...form.register('paymentType')}>
+                <option value="Cash">Cash</option>
+                <option value="Debt">Debt</option>
+                <option value="Partial">Partial</option>
               </select>
             </div>
             <div>
-              <label className="text-sm">Quantity</label>
-              <input
-                type="number"
-                step="1"
-
-                step="0.0001"
-                className="input"
-                {...form.register('quantity', { valueAsNumber: true })}
-              />
-            </div>
-            <div>
-              <label className="text-sm">Cost Price</label>
+              <label className="text-sm">Paid Amount</label>
               <input
                 type="number"
                 step="0.01"
                 className="input"
-                {...form.register('costPrice', { valueAsNumber: true })}
+                {...form.register('paidAmount', { valueAsNumber: true })}
               />
             </div>
-            <div>
-              <label className="text-sm">Date</label>
-              <input type="date" className="input" {...form.register('date')} />
-            </div>
-            <button className="button w-full" disabled={form.formState.isSubmitting}>
-              {editing ? 'Update' : 'Create'}
-            </button>
-            {editing ? (
+          </div>
+
+          <div>
+            <div className="mb-2 text-sm font-medium">Lines</div>
+            <div className="space-y-3">
+              {fields.map((field, index) => (
+                <div key={field.id} className="grid gap-3 md:grid-cols-5">
+                  <div>
+                    <label className="text-xs">Product</label>
+                    <select className="input" {...form.register(`lines.${index}.productId`)}>
+                      <option value="">Select</option>
+                      {productsQuery.data?.map((product) => (
+                        <option key={product.id} value={product.id}>
+                          {product.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs">Package</label>
+                    <select className="input" {...form.register(`lines.${index}.productPackageId`)}>
+                      <option value="">Select</option>
+                      {packagesQuery.data?.map((pkg) => (
+                        <option key={pkg.id} value={pkg.id}>
+                          {pkg.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs">Qty</label>
+                    <input
+                      type="number"
+                      step="1"
+                      className="input"
+                      {...form.register(`lines.${index}.quantity`, { valueAsNumber: true })}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs">Unit Price</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      className="input"
+                      {...form.register(`lines.${index}.unitPrice`, { valueAsNumber: true })}
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <button
+                      type="button"
+                      className="button-outline w-full"
+                      onClick={() => remove(index)}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
               <button
                 type="button"
-                className="button-outline w-full"
-                onClick={() => {
-                  setEditing(null);
-                  form.reset({ productId: '', productPackageId: '', quantity: 1, costPrice: 0, date: '' });
-                }}
+                className="button-outline"
+                onClick={() => append({ productId: '', productPackageId: '', quantity: 1, unitPrice: 0 })}
               >
-                Cancel
+                Add Line
               </button>
-            ) : null}
-          </form>
-        </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-slate-600">
+              Computed Total: <span className="number-strong">{formatNumber(totals)}</span>
+            </div>
+            <button className="button" disabled={createMutation.isPending}>
+              Create Sale
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

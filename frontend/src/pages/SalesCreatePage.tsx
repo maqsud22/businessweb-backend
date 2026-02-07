@@ -8,13 +8,12 @@ import { Product, ProductPackage, Store } from '../api/types';
 import PageHeader from '../components/PageHeader';
 import Status from '../components/Status';
 import { useNavigate } from 'react-router-dom';
+import { formatNumber } from '../lib/format';
 
 const lineSchema = z.object({
   productId: z.string().uuid(),
   productPackageId: z.string().uuid(),
   quantity: z.number().min(1),
-
-  quantity: z.number().min(0.0001),
   unitPrice: z.number().min(0.01)
 });
 
@@ -152,8 +151,6 @@ export default function SalesCreatePage() {
                     <input
                       type="number"
                       step="1"
-
-                      step="0.0001"
                       className="input"
                       {...form.register(`lines.${index}.quantity`, { valueAsNumber: true })}
                     />
@@ -189,7 +186,9 @@ export default function SalesCreatePage() {
           </div>
 
           <div className="flex items-center justify-between">
-            <div className="text-sm text-slate-600">Computed Total: {totals}</div>
+            <div className="text-sm text-slate-600">
+              Computed Total: <span className="number-strong">{formatNumber(totals)}</span>
+            </div>
             <button className="button" disabled={createMutation.isPending}>
               Create Sale
             </button>

@@ -4,6 +4,7 @@ import { apiClient } from '../api/client';
 import { Product, ProductReport, SalesSummary, StockReportItem } from '../api/types';
 import PageHeader from '../components/PageHeader';
 import Status from '../components/Status';
+import { formatNumber } from '../lib/format';
 
 async function fetchDaily(date?: string): Promise<SalesSummary> {
   const { data } = await apiClient.get('/api/Reports/daily', { params: { date } });
@@ -53,6 +54,28 @@ export default function ReportsPage() {
     enabled: !!productId
   });
 
+  const selectedProduct = productsQuery.data?.find((product) => product.id === productId);
+
+  const handleDownloadProductReport = () => {
+    if (!productReportQuery.data || !selectedProduct) return;
+
+    const rows = [
+      ['Product', selectedProduct.name],
+      ['Incoming', formatNumber(productReportQuery.data.incomingBaseQty)],
+      ['Sold', formatNumber(productReportQuery.data.soldBaseQty)],
+      ['In Stock', formatNumber(productReportQuery.data.inStockBaseQty)]
+    ];
+
+    const csv = rows.map((row) => row.map((cell) => `"${cell}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `product-report-${selectedProduct.name.replace(/\s+/g, '-').toLowerCase()}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader title="Reports" />
@@ -68,7 +91,9 @@ export default function ReportsPage() {
           <Status loading={dailyQuery.isLoading} error={dailyQuery.error?.message} />
           {dailyQuery.data ? (
             <div className="text-sm text-slate-700">
-              Total: {dailyQuery.data.totalSales} | Cash: {dailyQuery.data.cashSales} | Debt: {dailyQuery.data.debtSales}
+              Total: <span className="number-strong">{formatNumber(dailyQuery.data.totalSales)}</span> | Cash:{' '}
+              <span className="number-strong">{formatNumber(dailyQuery.data.cashSales)}</span> | Debt:{' '}
+              <span className="number-strong">{formatNumber(dailyQuery.data.debtSales)}</span>
             </div>
           ) : null}
         </div>
@@ -83,14 +108,26 @@ export default function ReportsPage() {
           <Status loading={monthlyQuery.isLoading} error={monthlyQuery.error?.message} />
           {monthlyQuery.data ? (
             <div className="text-sm text-slate-700">
-              Total: {monthlyQuery.data.totalSales} | Cash: {monthlyQuery.data.cashSales} | Debt: {monthlyQuery.data.debtSales}
+              Total: <span className="number-strong">{formatNumber(monthlyQuery.data.totalSales)}</span> | Cash:{' '}
+              <span className="number-strong">{formatNumber(monthlyQuery.data.cashSales)}</span> | Debt:{' '}
+              <span className="number-strong">{formatNumber(monthlyQuery.data.debtSales)}</span>
             </div>
           ) : null}
         </div>
       </div>
 
       <div className="card space-y-3">
-        <div className="text-sm font-medium">Product Report</div>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="text-sm font-medium">Product Report</div>
+          <button
+            type="button"
+            className="button-outline"
+            onClick={handleDownloadProductReport}
+            disabled={!productReportQuery.data || !selectedProduct}
+          >
+            Download Excel
+          </button>
+        </div>
         <select className="input" value={productId} onChange={(e) => setProductId(e.target.value)}>
           <option value="">Select product</option>
           {productsQuery.data?.map((product) => (
@@ -102,8 +139,9 @@ export default function ReportsPage() {
         <Status loading={productReportQuery.isLoading} error={productReportQuery.error?.message} />
         {productReportQuery.data ? (
           <div className="text-sm text-slate-700">
-            Incoming: {productReportQuery.data.incomingBaseQty} | Sold: {productReportQuery.data.soldBaseQty} | In Stock:{' '}
-            {productReportQuery.data.inStockBaseQty}
+            Incoming: <span className="number-strong">{formatNumber(productReportQuery.data.incomingBaseQty)}</span> | Sold:{' '}
+            <span className="number-strong">{formatNumber(productReportQuery.data.soldBaseQty)}</span> | In Stock:{' '}
+            <span className="number-strong">{formatNumber(productReportQuery.data.inStockBaseQty)}</span>
           </div>
         ) : null}
       </div>
@@ -125,9 +163,9 @@ export default function ReportsPage() {
               {stockQuery.data.map((item) => (
                 <tr key={item.productId}>
                   <td>{item.productName}</td>
-                  <td>{item.incomingBaseQty}</td>
-                  <td>{item.soldBaseQty}</td>
-                  <td>{item.inStockBaseQty}</td>
+                  <td className="number-strong">{formatNumber(item.incomingBaseQty)}</td>
+                  <td className="number-strong">{formatNumber(item.soldBaseQty)}</td>
+                  <td className="number-strong">{formatNumber(item.inStockBaseQty)}</td>
                 </tr>
               ))}
             </tbody>

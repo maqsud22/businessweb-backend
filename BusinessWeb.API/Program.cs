@@ -6,39 +6,14 @@ using BusinessWeb.Infrastructure.Data;
 using BusinessWeb.Infrastructure.Seed;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
 // ✅ Controllers
 builder.Services.AddControllers()
     .AddApplicationPart(typeof(BusinessWeb.API.Controllers.SalesController).Assembly);
-
-// ✅ Controllers + JSON default (Swagger'da text/plain emas, application/json chiqishi uchun)
-builder.Services.AddControllers(options =>
-{
-    // Agar client Accept: text/plain yuborsa 406 qaytaradi (professional behavior)
-    options.ReturnHttpNotAcceptable = true;
-})
-.AddApplicationPart(typeof(BusinessWeb.API.Controllers.SalesController).Assembly)
-.ConfigureApiBehaviorOptions(options =>
-{
-    // Validation errors JSON bo‘lsin (422)
-    options.InvalidModelStateResponseFactory = context =>
-    {
-        var problem = new ValidationProblemDetails(context.ModelState)
-        {
-            Status = StatusCodes.Status422UnprocessableEntity,
-            Title = "Validation failed"
-        };
-        return new UnprocessableEntityObjectResult(problem);
-    };
-});
-
- main
 builder.Services.AddAutoMapper(typeof(BusinessWeb.Application.Mapping.ProductProfile).Assembly);
 
 // ✅ Swagger + JWT support

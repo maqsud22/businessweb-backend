@@ -7,10 +7,11 @@ import { apiClient } from '../api/client';
 import { Product, ProductPackage } from '../api/types';
 import PageHeader from '../components/PageHeader';
 import Status from '../components/Status';
+import { formatNumber } from '../lib/format';
 
 const schema = z.object({
   name: z.string().min(2),
-  multiplier: z.number().min(0.0001),
+  multiplier: z.number().min(1),
   productId: z.string().uuid()
 });
 
@@ -94,7 +95,7 @@ export default function ProductPackagesPage() {
                 {packagesQuery.data.map((pkg) => (
                   <tr key={pkg.id} className="border-b last:border-0">
                     <td>{pkg.name}</td>
-                    <td>{pkg.multiplier}</td>
+                    <td className="number-strong">{formatNumber(pkg.multiplier)}</td>
                     <td>{pkg.productName ?? pkg.productId}</td>
                     <td className="text-right">
                       <button className="button-outline mr-2" onClick={() => startEdit(pkg)}>
@@ -121,7 +122,7 @@ export default function ProductPackagesPage() {
               <label className="text-sm">Multiplier</label>
               <input
                 type="number"
-                step="0.0001"
+                step="1"
                 className="input"
                 {...form.register('multiplier', { valueAsNumber: true })}
               />
