@@ -4,7 +4,6 @@ using BusinessWeb.Application.Validators.Sales;
 using BusinessWeb.Infrastructure;
 using BusinessWeb.Infrastructure.Data;
 using BusinessWeb.Infrastructure.Seed;
-using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
@@ -12,6 +11,11 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
+// ✅ Controllers
+builder.Services.AddControllers()
+    .AddApplicationPart(typeof(BusinessWeb.API.Controllers.SalesController).Assembly);
 
 // ✅ Controllers + JSON default (Swagger'da text/plain emas, application/json chiqishi uchun)
 builder.Services.AddControllers(options =>
@@ -34,6 +38,7 @@ builder.Services.AddControllers(options =>
     };
 });
 
+ main
 builder.Services.AddAutoMapper(typeof(BusinessWeb.Application.Mapping.ProductProfile).Assembly);
 
 // ✅ Swagger + JWT support

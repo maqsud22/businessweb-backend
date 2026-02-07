@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using BusinessWeb.Application.DTOs.StockIns;
 using BusinessWeb.Application.Exceptions;
@@ -41,6 +41,7 @@ public class StockInService : IStockInService
         var entity = _mapper.Map<StockIn>(dto);
         entity.Id = Guid.NewGuid();
         entity.CreatedAt = DateTime.UtcNow;
+        entity.Date = NormalizeToUtc(dto.Date);
 
         await _uow.Repo<StockIn>().AddAsync(entity, ct);
         await _uow.SaveChangesAsync(ct);
@@ -56,6 +57,7 @@ public class StockInService : IStockInService
         await EnsureProductPackageAsync(dto.ProductId, dto.ProductPackageId, ct);
 
         _mapper.Map(dto, entity);
+        entity.Date = NormalizeToUtc(dto.Date);
         _uow.Repo<StockIn>().Update(entity);
         await _uow.SaveChangesAsync(ct);
 
@@ -85,5 +87,15 @@ public class StockInService : IStockInService
 
         if (package.ProductId != productId)
             throw new AppException("ProductPackage tanlangan Product ga tegishli emas.", 400, "validation_error");
+    }
+
+    private static DateTime NormalizeToUtc(DateTime date)
+    {
+        return date.Kind switch
+        {
+            DateTimeKind.Utc => date,
+            DateTimeKind.Local => date.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(date, DateTimeKind.Utc)
+        };
     }
 }

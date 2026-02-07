@@ -8,7 +8,9 @@ using BusinessWeb.Domain.Entities;
 using BusinessWeb.Domain.Enums;
 using BusinessWeb.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper.QueryableExtensions;
 using Microsoft.Extensions.Logging;
+
 
 namespace BusinessWeb.Infrastructure.Services;
 
